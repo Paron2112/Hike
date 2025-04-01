@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Túra App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Túra App</h1>
+    
+    <div id="auth-container">
+        <!-- Ha nincs bejelentkezve, akkor csak a regisztrációs és bejelentkezési űrlapok jelennek meg -->
+        <form id="register-form">
+            <input type="text" id="register-username" placeholder="Felhasználónév" required>
+            <input type="password" id="register-password" placeholder="Jelszó" required>
+            <button type="submit">Regisztráció</button>
+        </form>
+        <form id="login-form">
+            <input type="text" id="login-username" placeholder="Felhasználónév" required>
+            <input type="password" id="login-password" placeholder="Jelszó" required>
+            <button type="submit">Bejelentkezés</button>
+        </form>
+        <div id="message"></div> <!-- Üzenetek ide fognak kerülni -->
+    </div>
+
+    <!-- Főoldal tartalom, amit csak bejelentkezett felhasználó láthat -->
+    <div id="main-content" style="display: none;">
+        <h2>Üdvözlünk a Túra Appban!</h2>
+        <div id="welcome-message"></div>
+        <p>Itt találhatók a túrák:</p>
+        <ul id="tour-list">
+            <!-- A túrák itt fognak megjelenni -->
+        </ul>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

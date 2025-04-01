@@ -1,0 +1,15 @@
+public key
+kioutfyu
+
+private key
+cd97a132-a76e-4cf3-b145-1abc58211367
+
+mango db database user
+Paron121212
+6KQbp%!CjTf-jX6
+
+mangoDB connection string
+
+mongodb+srv://Paron121212:6KQbp%!CjTf-jX6@paron1212.1vkeg.mongodb.net/?retryWrites=true&w=majority&appName=Paron1212
+
+mongodb+srv://Paron121212:6KQbp%!CjTf-jX6@paron1212.1vkeg.mongodb.net/?retryWrites=true&w=majority&appName=Paron1212

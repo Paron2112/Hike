@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Touring App</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+
+    <header>Touring App</header>
+    
+    
+    <!-- Regisztráció és bejelentkezés -->
+    <div id="auth-container" style="display: none;">
+        <form id="register-form">
+            <input type="text" id="register-username" placeholder="Username" required>
+            <input type="password" id="register-password" placeholder="Passwrod" required>
+            <button type="submit">Sign in</button>
+        </form>
+        <form id="login-form">
+            <input type="text" id="login-username" placeholder="Username" required>
+            <input type="password" id="login-password" placeholder="Passwrod" required>
+            <button type="submit">Login</button>
+        </form>
+        <div id="message"></div>
+    </div>
+
+    <!-- Főoldal tartalom (csak bejelentkezett felhasználóknak) -->
+    <div id="main-content" style="display: none;">
+        
+        
+        <!-- Bal oldali sáv: Új túra hozzáadása -->
+        <div id="left-sidebar">
+            <button id="add-tour-btn">New Tour</button>
+            <div id="tour-list">
+                <!-- Túrák listája -->
+            </div>
+        </div>
+
+        <!-- Térkép -->
+        <div id="map-container">
+            <div id="map"></div>
+        </div>
+
+        <!-- Jobb oldali sáv: Mentett túrák -->
+        <div id="right-sidebar">
+            <h3>Saved Tours</h3>
+            <div id="saved-tours">
+                <!-- A mentett túrák itt jelennek meg -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</body>
+</html>

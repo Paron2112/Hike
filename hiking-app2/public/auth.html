@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bejelentkezés | Hiking App</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        .auth-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            display: block;
+        }
+        
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="tabs">
+            <div class="tab active" id="login-tab">Bejelentkezés</div>
+            <div class="tab" id="register-tab">Regisztráció</div>
+        </div>
+        
+        <div id="login-form">
+            <div class="form-group">
+                <label for="login-username">Felhasználónév</label>
+                <input type="text" id="login-username" placeholder="Add meg a felhasználóneved">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Jelszó</label>
+                <input type="password" id="login-password" placeholder="Add meg a jelszavad">
+            </div>
+            <button id="login-btn">Bejelentkezés</button>
+            <div class="message" id="login-message"></div>
+        </div>
+        
+        <div id="register-form" style="display: none;">
+            <div class="form-group">
+                <label for="register-username">Felhasználónév</label>
+                <input type="text" id="register-username" placeholder="Válassz felhasználónevet">
+            </div>
+            <div class="form-group">
+                <label for="register-password">Jelszó</label>
+                <input type="password" id="register-password" placeholder="Válassz erős jelszót (min. 6 karakter)">
+            </div>
+            <div class="form-group">
+                <label for="confirm-password">Jelszó megerősítése</label>
+                <input type="password" id="confirm-password" placeholder="Ismételd meg a jelszót">
+            </div>
+            <button id="register-btn">Regisztráció</button>
+            <div class="message" id="register-message"></div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.getElementById('login-tab').addEventListener('click', () => {
+            document.getElementById('login-form').style.display = 'block';
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('login-tab').classList.add('active');
+            document.getElementById('register-tab').classList.remove('active');
+        });
+
+        document.getElementById('register-tab').addEventListener('click', () => {
+            document.getElementById('register-form').style.display = 'block';
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-tab').classList.add('active');
+            document.getElementById('login-tab').classList.remove('active');
+        });
+
+        // Auth functions
+        async function login(username, password) {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    showMessage('login-message', 'Sikeres bejelentkezés! Átirányítás...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    throw new Error(data.message || 'Bejelentkezési hiba');
+                }
+            } catch (error) {
+                showMessage('login-message', error.message, 'error');
+            }
+        }
+
+        async function register(username, password) {
+            try {
+                if (password !== document.getElementById('confirm-password').value) {
+                    throw new Error('A jelszavak nem egyeznek');
+                }
+
+                if (password.length < 6) {
+                    throw new Error('A jelszónak legalább 6 karakter hosszúnak kell lennie');
+                }
+
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('register-message', 'Sikeres regisztráció! Most már bejelentkezhetsz.', 'success');
+                    // Switch to login tab after successful registration
+                    setTimeout(() => {
+                        document.getElementById('login-tab').click();
+                    }, 1500);
+                } else {
+                    throw new Error(data.message || 'Regisztrációs hiba');
+                }
+            } catch (error) {
+                showMessage('register-message', error.message, 'error');
+            }
+        }
+
+        function showMessage(elementId, text, type) {
+            const element = document.getElementById(elementId);
+            element.textContent = text;
+            element.className = 'message ' + type;
+        }
+
+        // Event listeners
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            login(username, password);
+        });
+
+        document.getElementById('register-btn').addEventListener('click', () => {
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            register(username, password);
+        });
+
+        // Handle Enter key
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    if (document.getElementById('login-form').style.display !== 'none') {
+                        document.getElementById('login-btn').click();
+                    } else {
+                        document.getElementById('register-btn').click();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

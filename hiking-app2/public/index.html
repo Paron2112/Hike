@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Luxembourg Routes</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #45a049;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f9f9f9;
+            min-height: 100vh;
+        }
+        
+        header {
+            background-image: url("/images/header-bg2.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 340px; /* 70%-kal nagyobb */
+            position: relative;
+        }
+        
+        #app-container {
+            display: none;
+            flex-direction: column;
+            height: calc(100vh - 340px);
+        }
+        
+        #main-content {
+            display: flex;
+            flex: 1;
+        }
+        
+        #sidebar {
+            width: 300px;
+            background: #f5f5f5;
+            padding: 15px;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+        }
+        
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+        
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: var(--primary-dark);
+        }
+        
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .route {
+            background: white;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .active-route {
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .point-item {
+            background: #f0f0f0;
+            padding: 5px;
+            margin: 3px 0;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        
+        .route-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        .divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        @media screen and (max-width: 992px) {
+            #main-content {
+                flex-direction: column;
+            }
+            
+            #sidebar {
+                width: 100%;
+                max-height: 300px;
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+            }
+            
+            #map {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header rész (csak kép) -->
+    <header></header>
+    
+    <!-- Fő alkalmazás -->
+    <div id="app-container">
+        <div id="main-content">
+            <div id="sidebar">
+                <input type="text" id="route-name" placeholder="Route name">
+                <button id="create-route">Create New Route</button>
+                <div class="divider"></div>
+                <div id="routes-list"></div>
+            </div>
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <!-- JWT Decode for token validation -->
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+    
+    <script>
+        // DOM elements
+        const appContainer = document.getElementById('app-container');
+        const routesListEl = document.getElementById('routes-list');
+        const routeNameEl = document.getElementById('route-name');
+        const createRouteBtn = document.getElementById('create-route');
+
+        // Application state
+        let routes = [];
+        let activeRouteId = null;
+        let routeMarkers = null;
+        let routeLines = null;
+        let map = null;
+
+        // Initialize Map
+        function initMap() {
+            map = L.map('map').setView([49.8153, 6.1296], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            routeMarkers = L.layerGroup().addTo(map);
+            routeLines = L.layerGroup().addTo(map);
+
+            // Add point on map click
+            map.on('click', function(e) {
+                addPointToRoute(e.latlng);
+            });
+        }
+
+        // Új útvonal létrehozása (javított verzió)
+async function createNewRoute() {
+    const routeName = routeNameEl.value.trim();
+    if (!routeName) return;
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/hikes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                hikeName: routeName,
+                startLocation: "Route start",
+                endLocation: "Route end",
+                waypoints: []
+            })
+        });
+
+        if (!response.ok) throw new Error('Failed to create route');
+
+        const newRoute = await response.json();
+        
+        // Frissítjük a lokális állapotot
+        const localRoute = {
+            id: newRoute._id,
+            name: newRoute.hikeName,
+            points: [],
+            createdAt: new Date().toISOString()
+        };
+        
+        routes = [localRoute, ...routes];
+        activeRouteId = localRoute.id; // Fontos: beállítjuk aktívnak
+        renderRoutesList();
+        routeNameEl.value = '';
+        clearMap();
+        
+        // Visszajelzés a felhasználónak
+        alert(`Route "${localRoute.name}" created successfully!`);
+    } catch (error) {
+        console.error('Error creating route:', error);
+        alert('Error creating route: ' + error.message);
+    }
+}
+
+        // Pont hozzáadása (javított verzió)
+        async function addPointToRoute(latlng) {
+            if (!activeRouteId) {
+                alert('Please create or select a route first');
+                return;
+            }
+            
+            const route = routes.find(r => r.id === activeRouteId);
+            if (route) {
+                const pointName = prompt('Enter point name:', `Point ${route.points.length + 1}`);
+                if (pointName === null) return;
+                
+                const newPoint = {
+                    id: Date.now().toString(),
+                    name: pointName || `Point ${route.points.length + 1}`,
+                    latlng: [latlng.lat, latlng.lng]
+                };
+                
+                // Frissítjük a lokális állapotot
+                route.points.push(newPoint);
+                renderRoutesList();
+                drawRouteOnMap(route);
+                
+                // Mentés a szerverre
+                try {
+                    await updateRouteOnServer(route);
+                    alert(`Point "${newPoint.name}" added successfully!`);
+                } catch (error) {
+                    console.error('Error saving point:', error);
+                    alert('Error saving point: ' + error.message);
+                    // Visszagörgetjük a változtatást, ha nem sikerült menteni
+                    route.points.pop();
+                    renderRoutesList();
+                    drawRouteOnMap(route);
+                }
+            }
+        }
+
+        // Szerver frissítése (javított verzió)
+        async function updateRouteOnServer(route) {
+            const token = localStorage.getItem('token');
+            const waypoints = route.points.map(p => ({
+                name: p.name,
+                lat: p.latlng[0],
+                lng: p.latlng[1]
+            }));
+            
+            const response = await fetch(`/api/hikes/${encodeURIComponent(route.id)}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    waypoints: waypoints
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update route');
+            }
+            
+            return await response.json();
+        }
+
+        function drawRouteOnMap(route) {
+            routeMarkers.clearLayers();
+            routeLines.clearLayers();
+            
+            if (route.points.length > 0) {
+                const latlngs = route.points.map(p => p.latlng);
+                const polyline = L.polyline(latlngs, {color: 'blue'}).addTo(routeLines);
+                
+                route.points.forEach(point => {
+                    L.marker(point.latlng, {
+                        draggable: true,
+                        title: point.name
+                    })
+                    .bindPopup(`<b>${point.name}</b><br>${point.latlng[0].toFixed(4)}, ${point.latlng[1].toFixed(4)}`)
+                    .addTo(routeMarkers)
+                    .on('dragend', function(e) {
+                        const marker = e.target;
+                        const newPosition = marker.getLatLng();
+                        const pointIndex = route.points.findIndex(p => 
+                            p.latlng[0] === point.latlng[0] && 
+                            p.latlng[1] === point.latlng[1]
+                        );
+                        
+                        if (pointIndex !== -1) {
+                            route.points[pointIndex].latlng = [newPosition.lat, newPosition.lng];
+                            drawRouteOnMap(route);
+                            updateRouteOnServer(route);
+                        }
+                    });
+                });
+                
+                map.fitBounds(routeLines.getBounds());
+            }
+        }
+
+        function clearMap() {
+            routeMarkers.clearLayers();
+            routeLines.clearLayers();
+        }
+
+        async function renderRoutesList() {
+            routesListEl.innerHTML = '';
+            
+            await loadRoutesFromServer();
+            
+            routes.forEach(route => {
+                const routeEl = document.createElement('div');
+                routeEl.className = `route ${route.id === activeRouteId ? 'active-route' : ''}`;
+                routeEl.innerHTML = `
+                    <h3>${route.name}</h3>
+                    <p>${route.points.length} points</p>
+                    <div class="points-list" id="points-${route.id}"></div>
+                    <div class="route-actions">
+                        <button class="select-route" data-id="${route.id}">Select</button>
+                        <button class="delete-route" data-id="${route.id}">Delete</button>
+                    </div>
+                `;
+                
+                const pointsListEl = routeEl.querySelector(`.points-list`);
+                route.points.forEach(point => {
+                    const pointEl = document.createElement('div');
+                    pointEl.className = 'point-item';
+                    pointEl.textContent = `${point.name}: ${point.latlng[0].toFixed(4)}, ${point.latlng[1].toFixed(4)}`;
+                    pointsListEl.appendChild(pointEl);
+                });
+                
+                routesListEl.appendChild(routeEl);
+                
+                routeEl.querySelector('.select-route').addEventListener('click', () => {
+                    activeRouteId = route.id;
+                    renderRoutesList();
+                    drawRouteOnMap(route);
+                });
+                
+                routeEl.querySelector('.delete-route').addEventListener('click', async () => {
+                    if (confirm(`Delete route "${route.name}"?`)) {
+                        try {
+                            const token = localStorage.getItem('token');
+                            const response = await fetch(`/api/hikes/${encodeURIComponent(route.id)}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`
+                                }
+                            });
+                            
+                            if (!response.ok) throw new Error('Failed to delete route');
+                            
+                            routes = routes.filter(r => r.id !== route.id);
+                            if (activeRouteId === route.id) {
+                                activeRouteId = null;
+                                clearMap();
+                            }
+                            renderRoutesList();
+                        } catch (error) {
+                            console.error('Error deleting route:', error);
+                            alert('Error deleting route');
+                        }
+                    }
+                });
+            });
+        }
+
+        // A loadRoutesFromServer függvényben
+        async function loadRoutesFromServer() {
+            try {
+                console.log('Loading routes from server...');
+                const token = localStorage.getItem('token');
+                if (!token) throw new Error('No token found');
+                
+                const response = await fetch('/api/hikes', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    console.error('Server response not OK:', response.status);
+                    throw new Error('Failed to load routes');
+                }
+                
+                const serverRoutes = await response.json();
+                console.log('Received routes from server:', serverRoutes);
+                
+                // ... (további kód)
+            } catch (error) {
+                console.error('Error loading routes:', error);
+                alert('Error loading routes: ' + error.message);
+            }
+}
+
+        // Authentication
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (token && isValidToken(token)) {
+                showApp();
+            } else {
+                window.location.href = '/login';
+            }
+        }
+
+        function isValidToken(token) {
+            try {
+                const decoded = jwt_decode(token);
+                return decoded.exp > Date.now() / 1000;
+            } catch {
+                return false;
+            }
+        }
+
+        function showApp() {
+            appContainer.style.display = 'flex';
+            initMap();
+            renderRoutesList();
+        }
+
+        // Event Listeners
+        createRouteBtn.addEventListener('click', createNewRoute);
+
+        // Initialize app
+        checkAuth();
+    </script>
+</body>
+</html>
