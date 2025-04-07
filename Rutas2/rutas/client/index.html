@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Travel Diary</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-container">
+        <h2>Login</h2>
+        <form id="login-form" class="login-form">
+            <label for="username">Username:</label>
+            <input type="text" id="username" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" required>
+            <button type="submit">Login</button>
+        </form>
+        <h2>Register</h2>
+        <form id="register-form" class="login-form">
+            <label for="reg-username">Username:</label>
+            <input type="text" id="reg-username" required>
+            <label for="reg-password">Password:</label>
+            <input type="password" id="reg-password" required>
+            <button type="submit">Register</button>
+        </form>
+    </div>
+
+    <!-- Main App (hidden until login) -->
+    <div id="app-container">
+        <div id="header">
+            <div>
+                <span class="user-greeting" id="user-greeting"></span>
+                <span>My Luxembourg Routes</span>
+            </div>
+            <button id="logout-btn" class="logout">Logout</button>
+        </div>
+        <div id="main-content">
+            <div id="sidebar">
+                <input type="text" id="route-name" placeholder="Route name">
+                <button id="create-route">Create New Route</button>
+                <div id="routes-list"></div>
+            </div>
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

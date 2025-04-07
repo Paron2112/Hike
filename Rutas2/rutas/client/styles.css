@@ -1,0 +1,124 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+#login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+#app-container {
+    display: none;
+    flex-direction: column;
+    height: 100vh;
+}
+#header {
+    padding: 10px;
+    background: #f5f5f5;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#main-content {
+    display: flex;
+    flex: 1;
+}
+#sidebar {
+    width: 300px;
+    background: #f5f5f5;
+    padding: 15px;
+    overflow-y: auto;  /* Esto activa el scroll vertical */
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    height: calc(100vh - 92px); /* Altura del viewport menos el header */
+    position: sticky;
+    top: 60px; /* Altura del header */
+}
+#routes-list {
+    overflow-y: visible; /* Asegura que el contenido interno pueda crecer */
+}
+.delete-point {
+    background-color: red; /* Fondo rojo */
+    color: white; /* Texto blanco */
+    border: none; /* Sin borde */
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 5px; /* Bordes redondeados */
+}
+.delete-point:hover {
+    background-color: darkred; /* Rojo oscuro al pasar el mouse */
+}
+.edit-point {
+    background-color: rgb(91, 39, 151); /* Fondo rojo */
+    color: white; /* Texto blanco */
+    border: none; /* Sin borde */
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 5px; /* Bordes redondeados */
+}
+.edit-point:hover {
+    background-color: rgb(68, 18, 66); /* Rojo oscuro al pasar el mouse */
+}
+#map {
+    flex: 1;
+}
+button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+button:hover {
+    background: #45a049;
+}
+button.logout {
+    background: #f44336;
+}
+button.logout:hover {
+    background: #d32f2f;
+}
+input {
+    width: 95%;
+    padding: 8px;
+    margin: 5px 0 15px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+.route {
+    background: white;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.active-route {
+    border-left: 4px solid #4CAF50;
+}
+.point-item {
+    background: #f0f0f0;
+    padding: 5px;
+    margin: 3px 0;
+    border-radius: 3px;
+    font-size: 13px;
+}
+.route-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+.login-form {
+    display: flex;
+    flex-direction: column;
+}
+.user-greeting {
+    font-weight: bold;
+    margin-right: 10px;
+}
